@@ -361,7 +361,7 @@
       <div class="grid4">
         <div class="field">
           <label for="rtow">RTOW</label>
-          <input id="rtow" inputmode="decimal" placeholder="7688 ou N/A" autocomplete="off">
+          <input id="rtow" inputmode="decimal" placeholder="16950 ou N/A" autocomplete="off">
         </div>
         <div class="field">
           <label for="block">Block</label>
@@ -387,7 +387,9 @@
         </div>
         <div class="field">
           <label for="immat">Immatriculation</label>
-          <input id="immat" placeholder="FGTKJ" autocomplete="off" style="text-transform:uppercase">
+          <select id="immat">
+            <option value="" disabled selected>&mdash; s&eacute;lectionner &mdash;</option>
+          </select>
         </div>
       </div>
     </section>
@@ -479,15 +481,44 @@
     return els.preset.value === CUSTOM ? els.custom.value : els.preset.value.replace(/\\n/g, '\n');
   }
 
-  /** Nettoie la saisie et force le prefixe F- des immatriculations francaises. */
-  function fullImmat(){
-    const cleaned = els.immat.value.trim().replace(/[\s-]/g, '').toUpperCase();
-    if (!cleaned) return '';
-    return cleaned.startsWith('F') ? cleaned : 'F' + cleaned;
+  /** Masse et index de base par immat/equipage. Source : Tableau des versions PAX,
+   *  MANEX partie B6 (annexe B6-02 Rev 57, 13/06/2026). */
+  const AIRCRAFT_VERSIONS = {
+    FGLND: { '2/0':[10937,4961,40.27], '2/1':[11102,5036,35.15], '2/2':[11268,5111,31.42], '3/0':[11125,5046,34.46], '3/1':[11290,5121,30.74] },
+    FGLNE: { '2/0':[11206,5083,22.32], '2/1':[11371,5158,17.20], '2/2':[11537,5233,13.47], '3/0':[11393,5168,16.51], '3/1':[11559,5243,12.79] },
+    FGLNF: { '2/0':[11252,5104,27.33], '2/1':[11418,5179,22.21], '2/2':[11583,5254,18.48], '3/0':[11440,5189,21.52], '3/1':[11605,5264,17.80] },
+    FGLNH: { '2/0':[10913,4950,38.13], '2/1':[11078,5025,33.01], '2/2':[11244,5100,29.28], '3/0':[11100,5035,32.32], '3/1':[11266,5110,28.60] },
+    FGLNK: { '2/0':[11067,5020,41.15], '2/1':[11233,5095,36.03], '2/2':[11398,5170,32.30], '3/0':[11255,5105,35.34], '3/1':[11420,5180,31.62] },
+    FGOPE: { '2/0':[10942,4963,38.42], '2/1':[11107,5038,33.30], '2/2':[11272,5113,29.57], '3/0':[11129,5048,32.61], '3/1':[11294,5123,28.89] },
+    FGRYL: { '2/0':[11244,5100,37.06], '2/1':[11409,5175,31.94], '2/2':[11574,5250,28.21], '3/0':[11431,5185,31.25], '3/1':[11596,5260,27.53] },
+    FGTKJ: { '2/0':[11385,5164,28.61], '2/1':[11550,5239,23.49], '2/2':[11715,5314,19.76], '3/0':[11572,5249,22.80], '3/1':[11737,5324,19.08] },
+    FGTVC: { '2/0':[11305,5128,26.55], '2/1':[11471,5203,21.43], '2/2':[11636,5278,17.70], '3/0':[11493,5213,20.74], '3/1':[11658,5288,17.02] },
+    FGUME: { '2/0':[11125,5046,40.93], '2/1':[11290,5121,35.81], '2/2':[11455,5196,32.08], '3/0':[11312,5131,35.12], '3/1':[11477,5206,31.40] },
+    FGUPE: { '2/0':[10917,4952,34.38], '2/1':[11083,5027,29.26], '2/2':[11248,5102,25.53], '3/0':[11105,5037,28.57], '3/1':[11270,5112,24.85] },
+    FHAPE: { '2/0':[11239,5098,25.90], '2/1':[11405,5173,20.78], '2/2':[11570,5248,17.05], '3/0':[11427,5183,20.09], '3/1':[11592,5258,16.37] },
+    FHTJT: { '2/0':[11008,4993,35.71], '2/1':[11173,5068,30.59], '2/2':[11338,5143,26.86], '3/0':[11195,5078,29.90], '3/1':[11360,5153,26.18] },
+  };
+  const REGISTRATIONS = Object.keys(AIRCRAFT_VERSIONS);
+
+  function registrationLabel(code){ return 'F-' + code.slice(1); }
+
+  function findAircraftVersion(immat, crew){
+    const row = AIRCRAFT_VERSIONS[immat.trim().toUpperCase()];
+    if (!row) return null;
+    const key = crew.replace(/\s+/g, '');
+    return row[key] || null;
   }
 
+  REGISTRATIONS.forEach((code) => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = registrationLabel(code);
+    els.immat.appendChild(opt);
+  });
+
   function generateMail(){
-    return [
+    const immat = els.immat.value;
+    const lines = [
       'Hello,',
       '',
       formatWeightLine('RTOW', els.rtow.value),
@@ -495,16 +526,21 @@
       formatWeightLine('TAXI', els.taxi.value),
       formatWeightLine('TRIP', els.trip.value),
       'CREW : ' + els.crew.value.trim(),
-      fullImmat(),
+      immat,
       '',
       currentGpuFuelLine(),
-    ].join('\n');
+    ];
+    const version = findAircraftVersion(immat, els.crew.value);
+    if (version) {
+      const [dowLbs, dowKg, doi] = version;
+      lines.push('', 'DOW : ' + formatThousands(dowKg) + ' KG (' + formatThousands(dowLbs) + ' LBS)', 'DOI : ' + doi.toFixed(2));
+    }
+    return lines.join('\n');
   }
 
   function render(){
     els.mailOut.textContent = generateMail();
-    const immat = fullImmat();
-    els.plate.textContent = immat ? ('F-' + immat.slice(1)) : 'F–----';
+    els.plate.textContent = els.immat.value ? registrationLabel(els.immat.value) : 'F–----';
     els.customWrap.style.display = els.preset.value === CUSTOM ? '' : 'none';
   }
 
@@ -517,10 +553,11 @@
     els.stamp.textContent = dd + ' ' + months[d.getMonth()] + ' · ' + hh + ':' + mi + 'L';
   }
 
-  [els.rtow, els.block, els.taxi, els.trip, els.crew, els.immat, els.custom].forEach((el) => {
+  [els.rtow, els.block, els.taxi, els.trip, els.crew, els.custom].forEach((el) => {
     el.addEventListener('input', render);
   });
   els.preset.addEventListener('change', render);
+  els.immat.addEventListener('change', render);
 
   els.copyBtn.addEventListener('click', async () => {
     const text = generateMail();

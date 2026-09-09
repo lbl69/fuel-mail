@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { generateFuelMail, GPU_FUEL_PRESETS } from "@/lib/fuel";
+import { generateFuelMail, GPU_FUEL_PRESETS, REGISTRATIONS, registrationLabel } from "@/lib/fuel";
 
 const CUSTOM = "__custom__";
 
@@ -87,7 +87,7 @@ export default function FuelPage() {
         <section className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">
           <h2 className="mb-2 text-sm font-semibold">Fuel (LBS)</h2>
           <div className="grid grid-cols-2 gap-3">
-            <WeightField label="RTOW" value={rtow} onChange={setRtow} placeholder="ex: 7688 ou N/A" />
+            <WeightField label="RTOW" value={rtow} onChange={setRtow} placeholder="ex: 16950 ou N/A" />
             <WeightField label="BLOCK" value={block} onChange={setBlock} placeholder="ex: 1633" />
             <WeightField label="TAXI" value={taxi} onChange={setTaxi} placeholder="ex: 50" />
             <WeightField label="TRIP" value={trip} onChange={setTrip} placeholder="ex: 574" />
@@ -112,12 +112,20 @@ export default function FuelPage() {
               <span className="text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                 Immatriculation
               </span>
-              <input
-                className="rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-sm uppercase"
+              <select
+                className="rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-sm"
                 value={immat}
                 onChange={(e) => setImmat(e.target.value)}
-                placeholder="FGTKJ"
-              />
+              >
+                <option value="" disabled>
+                  — sélectionner —
+                </option>
+                {REGISTRATIONS.map((code) => (
+                  <option key={code} value={code}>
+                    {registrationLabel(code)}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
         </section>

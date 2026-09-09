@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Fuel Telex</title>
+<meta name="description" content="Compose le mail fuel quotidien pour le trafic : saisie en LBS, conversion automatique en KG.">
+<meta name="theme-color" content="#B96A1F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fuel Telex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23B96A1F'/%3E%3Ctext x='50' y='69' font-family='IBM Plex Mono,monospace' font-size='54' font-weight='700' fill='%23FFF7EC' text-anchor='middle'%3EF%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23B96A1F'/%3E%3Ctext x='50' y='69' font-family='IBM Plex Mono,monospace' font-size='54' font-weight='700' fill='%23FFF7EC' text-anchor='middle'%3EF%3C/text%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #E7EAEC;
+    --surface: #FDFDFC;
+    --ticket: #F3F2ED;
+    --ink: #1C2733;
+    --ink-soft: #5B6672;
+    --ink-faint: #8A939C;
+    --line: #C7CDD1;
+    --line-soft: #DADFE2;
+    --accent: #B96A1F;
+    --accent-strong: #96550F;
+    --on-accent: #FFF7EC;
+    --ok: #3F7D5C;
+    --bad: #B5432F;
+    --focus: #96550F;
+    --shadow: rgba(28,39,51,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #0E141B;
+      --surface: #161F29;
+      --ticket: #131A22;
+      --ink: #E9EDF0;
+      --ink-soft: #9AA7B3;
+      --ink-faint: #6B7883;
+      --line: #2A343E;
+      --line-soft: #212A33;
+      --accent: #E2924A;
+      --accent-strong: #F0A868;
+      --on-accent: #241202;
+      --ok: #63B189;
+      --bad: #E28770;
+      --focus: #E2924A;
+      --shadow: rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #0E141B;
+    --surface: #161F29;
+    --ticket: #131A22;
+    --ink: #E9EDF0;
+    --ink-soft: #9AA7B3;
+    --ink-faint: #6B7883;
+    --line: #2A343E;
+    --line-soft: #212A33;
+    --accent: #E2924A;
+    --accent-strong: #F0A868;
+    --on-accent: #241202;
+    --ok: #63B189;
+    --bad: #E28770;
+    --focus: #E2924A;
+    --shadow: rgba(0,0,0,0.35);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ text-size-adjust: 100%; }
+  body{
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Public Sans', system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  .wrap{
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 28px 18px 132px;
+  }
+
+  .masthead{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 12px;
+  }
+  .masthead .id{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .eyebrow{
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  h1{
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .reg-plate{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+  .lede{
+    margin: 10px 0 24px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    max-width: 46ch;
+  }
+
+  .console{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 14px 16px 16px;
+    box-shadow: 0 1px 2px var(--shadow);
+  }
+  .panel h2{
+    margin: 0 0 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .panel h2 .count{
+    font-weight: 500;
+    color: var(--ink-faint);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .grid4{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .grid2{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .field{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+  .field label{
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .field .unit{
+    font-weight: 500;
+    color: var(--ink-faint);
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .field input,
+  .field select,
+  .field textarea{
+    width: 100%;
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 8px 9px;
+    outline: none;
+  }
+  .field select{ font-family: 'Public Sans', system-ui, sans-serif; font-size: 13.5px; }
+  .field textarea{ resize: vertical; min-height: 44px; }
+  .field input::placeholder,
+  .field textarea::placeholder{ color: var(--ink-faint); }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus{
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent);
+  }
+  .field.wide{ grid-column: 1 / -1; }
+
+  .hint{
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.5;
+  }
+
+  /* --- Ticket preview: styled like a torn telex slip --- */
+  .ticket-shell{
+    margin-top: 18px;
+    position: relative;
+    padding-left: 22px;
+  }
+  .ticket-shell::before{
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 14px;
+    background-image: radial-gradient(circle, var(--bg) 2.6px, transparent 2.7px);
+    background-size: 14px 14px;
+    background-position: 0 0;
+    background-color: var(--ticket);
+    border-radius: 3px 0 0 3px;
+  }
+  .ticket{
+    background: var(--ticket);
+    border: 1px solid var(--line);
+    border-radius: 0 4px 4px 0;
+    padding: 16px 16px 14px 18px;
+  }
+  .ticket-head{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .ticket-head .label{
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .ticket-head .stamp{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  #mailOut{
+    margin: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--ink);
+    tab-size: 2;
+  }
+  #mailOut .blank{ color: var(--ink-faint); }
+
+  .actionbar{
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(6px);
+    border-top: 1px solid var(--line);
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+  }
+  .actionbar-inner{
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  button{
+    font-family: 'Public Sans', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 3px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  button:focus-visible{
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .btn-primary{
+    background: var(--accent);
+    color: var(--on-accent);
+    flex: 1;
+  }
+  .btn-primary:active{ background: var(--accent-strong); }
+  .btn-ghost{
+    background: transparent;
+    border-color: var(--line);
+    color: var(--ink-soft);
+  }
+  .status{
+    font-size: 11.5px;
+    color: var(--ok);
+    font-weight: 600;
+    min-width: 74px;
+    text-align: right;
+  }
+
+  @media (max-width: 400px){
+    .grid4{ grid-template-columns: 1fr 1fr; }
+    h1{ font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="id">
+      <p class="eyebrow">Beech 1900D &middot; message trafic</p>
+      <h1>Fuel Telex</h1>
+    </div>
+    <span class="reg-plate" id="platePreview">F&ndash;----</span>
+  </header>
+
+  <p class="lede">
+    Saisis les poids directement en LBS. La conversion en KG se fait toute seule et la
+    valeur LBS reste entre parenth&egrave;ses, pour que tu puisses la recontr&ocirc;ler d'un
+    coup d'&oelig;il avant l'envoi.
+  </p>
+
+  <div class="console">
+    <section class="panel">
+      <h2>Fuel <span class="count">&mdash; en LBS</span></h2>
+      <div class="grid4">
+        <div class="field">
+          <label for="rtow">RTOW</label>
+          <input id="rtow" inputmode="decimal" placeholder="7688 ou N/A" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="block">Block</label>
+          <input id="block" inputmode="decimal" placeholder="1633" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="taxi">Taxi</label>
+          <input id="taxi" inputmode="decimal" placeholder="50" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="trip">Trip</label>
+          <input id="trip" inputmode="decimal" placeholder="574" autocomplete="off">
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>&Eacute;quipage &amp; immat</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="crew">Crew</label>
+          <input id="crew" placeholder="2/1" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="immat">Immatriculation</label>
+          <input id="immat" placeholder="FGTKJ" autocomplete="off" style="text-transform:uppercase">
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Assistance au sol</h2>
+      <div class="field">
+        <label for="preset" style="margin-bottom:1px">GPU / fuel</label>
+        <select id="preset">
+          <option value="GPU\nNO FUEL">GPU seul (pas de fuel)</option>
+          <option value="GPU + FUEL">GPU + fuel</option>
+          <option value="NO GPU\nNO FUEL">Ni GPU ni fuel</option>
+          <option value="__custom__">Personnalis&eacute;&hellip;</option>
+        </select>
+      </div>
+      <div class="field wide" id="customWrap" style="display:none; margin-top:10px;">
+        <label for="custom">Texte personnalis&eacute;</label>
+        <textarea id="custom" placeholder="GPU + FUEL"></textarea>
+      </div>
+    </section>
+  </div>
+
+  <div class="ticket-shell">
+    <div class="ticket">
+      <div class="ticket-head">
+        <span class="label">Aper&ccedil;u du message</span>
+        <span class="stamp" id="stamp"></span>
+      </div>
+      <pre id="mailOut"></pre>
+    </div>
+  </div>
+</div>
+
+<div class="actionbar">
+  <div class="actionbar-inner">
+    <button type="button" class="btn-primary" id="copyBtn">Copier le mail</button>
+    <button type="button" class="btn-ghost" id="resetBtn">Effacer</button>
+    <span class="status" id="statusMsg"></span>
+  </div>
+</div>
+
+<script>
+  const LBS_TO_KG = 0.45359237;
+  const CUSTOM = "__custom__";
+
+  const els = {
+    rtow: document.getElementById('rtow'),
+    block: document.getElementById('block'),
+    taxi: document.getElementById('taxi'),
+    trip: document.getElementById('trip'),
+    crew: document.getElementById('crew'),
+    immat: document.getElementById('immat'),
+    preset: document.getElementById('preset'),
+    custom: document.getElementById('custom'),
+    customWrap: document.getElementById('customWrap'),
+    mailOut: document.getElementById('mailOut'),
+    plate: document.getElementById('platePreview'),
+    stamp: document.getElementById('stamp'),
+    copyBtn: document.getElementById('copyBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    statusMsg: document.getElementById('statusMsg'),
+  };
+
+  function isNA(s){ return /^n\/?a$/i.test(s.trim()); }
+
+  function parseWeightLbs(s){
+    const cleaned = s.replace(/[^\d.,]/g, '').replace(',', '.');
+    if (!cleaned) return null;
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function lbsToKg(lbs){ return Math.round(lbs * LBS_TO_KG); }
+
+  function formatThousands(n){
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  }
+
+  function formatWeightLine(label, raw){
+    const trimmed = raw.trim();
+    if (!trimmed) return label + ' : ';
+    if (isNA(trimmed)) return label + ' : N/A KG';
+    const lbs = parseWeightLbs(trimmed);
+    if (lbs == null) return label + ' : ' + trimmed;
+    return label + ' : ' + formatThousands(lbsToKg(lbs)) + ' KG (' + formatThousands(lbs) + ' LBS)';
+  }
+
+  function currentGpuFuelLine(){
+    return els.preset.value === CUSTOM ? els.custom.value : els.preset.value.replace(/\\n/g, '\n');
+  }
+
+  /** Nettoie la saisie et force le prefixe F- des immatriculations francaises. */
+  function fullImmat(){
+    const cleaned = els.immat.value.trim().replace(/[\s-]/g, '').toUpperCase();
+    if (!cleaned) return '';
+    return cleaned.startsWith('F') ? cleaned : 'F' + cleaned;
+  }
+
+  function generateMail(){
+    return [
+      'Hello,',
+      '',
+      formatWeightLine('RTOW', els.rtow.value),
+      formatWeightLine('BLOCK', els.block.value),
+      formatWeightLine('TAXI', els.taxi.value),
+      formatWeightLine('TRIP', els.trip.value),
+      'CREW : ' + els.crew.value.trim(),
+      fullImmat(),
+      '',
+      currentGpuFuelLine(),
+    ].join('\n');
+  }
+
+  function render(){
+    els.mailOut.textContent = generateMail();
+    const immat = fullImmat();
+    els.plate.textContent = immat ? ('F-' + immat.slice(1)) : 'F–----';
+    els.customWrap.style.display = els.preset.value === CUSTOM ? '' : 'none';
+  }
+
+  function stampNow(){
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, '0');
+    const months = ['JAN','FEV','MAR','AVR','MAI','JUN','JUL','AOU','SEP','OCT','NOV','DEC'];
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    els.stamp.textContent = dd + ' ' + months[d.getMonth()] + ' · ' + hh + ':' + mi + 'L';
+  }
+
+  [els.rtow, els.block, els.taxi, els.trip, els.crew, els.immat, els.custom].forEach((el) => {
+    el.addEventListener('input', render);
+  });
+  els.preset.addEventListener('change', render);
+
+  els.copyBtn.addEventListener('click', async () => {
+    const text = generateMail();
+    try {
+      await navigator.clipboard.writeText(text);
+      flashStatus('Copié ✓');
+    } catch (e) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        flashStatus('Copié ✓');
+      } catch (e2) {
+        flashStatus('Copie impossible');
+      }
+    }
+  });
+
+  function flashStatus(msg){
+    els.statusMsg.textContent = msg;
+    setTimeout(() => { els.statusMsg.textContent = ''; }, 2200);
+  }
+
+  els.resetBtn.addEventListener('click', () => {
+    [els.rtow, els.block, els.taxi, els.trip, els.crew, els.immat, els.custom].forEach((el) => { el.value = ''; });
+    els.preset.value = 'GPU\\nNO FUEL';
+    render();
+  });
+
+  stampNow();
+  render();
+  setInterval(stampNow, 30000);
+</script>
+</body>
+</html>

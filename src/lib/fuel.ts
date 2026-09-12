@@ -37,6 +37,7 @@ export const RECIPIENTS = [
   { label: "Trafic LYS", email: "operations.lys@aviapartner.aero" },
   { label: "Trafic MXP", email: "mxp.handling.ops@aviapartner.aero" },
   { label: "Trafic PUF", email: "trafic@pau.aeroport.fr" },
+  { label: "Trafic MRS", email: "trafmrs@aviapartner.aero" },
 ] as const;
 
 export const GPU_FUEL_PRESETS = [

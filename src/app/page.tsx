@@ -81,10 +81,28 @@ export default function FuelPage() {
       setNotice("Choisis un destinataire d'abord.");
       return;
     }
-    const subject = "FUEL" + (immat ? " " + registrationLabel(immat) : "");
+    const subject = "Fuel Figures T7";
     const body = mail.split("\n").join("\r\n");
-    window.location.href =
-      "mailto:" + encodeURIComponent(recipient) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    const to = encodeURIComponent(recipient);
+    const params = "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    const outlookUrl = "ms-outlook://compose?to=" + to + "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    const mailtoUrl = "mailto:" + to + params;
+
+    let fallbackFired = false;
+    const fallback = () => {
+      if (fallbackFired) return;
+      fallbackFired = true;
+      window.location.href = mailtoUrl;
+    };
+    const timer = window.setTimeout(fallback, 900);
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        window.clearTimeout(timer);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.location.href = outlookUrl;
   };
 
   return (

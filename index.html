@@ -632,10 +632,28 @@
       flashStatus('Choisis un destinataire', true);
       return;
     }
-    const subject = 'FUEL' + (els.immat.value ? ' ' + registrationLabel(els.immat.value) : '');
+    const subject = 'Fuel Figures T7';
     const body = generateMail().split('\n').join('\r\n');
-    window.location.href = 'mailto:' + encodeURIComponent(els.recipient.value) +
-      '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    const to = encodeURIComponent(els.recipient.value);
+    const params = '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    const outlookUrl = 'ms-outlook://compose?to=' + to + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    const mailtoUrl = 'mailto:' + to + params;
+
+    let fallbackFired = false;
+    const fallback = () => {
+      if (fallbackFired) return;
+      fallbackFired = true;
+      window.location.href = mailtoUrl;
+    };
+    const timer = setTimeout(fallback, 900);
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        clearTimeout(timer);
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.location.href = outlookUrl;
   });
 
   els.resetBtn.addEventListener('click', () => {

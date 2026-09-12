@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { generateFuelMail, GPU_FUEL_PRESETS, REGISTRATIONS, registrationLabel } from "@/lib/fuel";
+import { generateFuelMail, GPU_FUEL_PRESETS, REGISTRATIONS, RECIPIENTS, registrationLabel } from "@/lib/fuel";
 
 const CUSTOM = "__custom__";
 
@@ -41,7 +41,9 @@ export default function FuelPage() {
   const [immat, setImmat] = useState("");
   const [preset, setPreset] = useState<string>(GPU_FUEL_PRESETS[0].value);
   const [customText, setCustomText] = useState("");
+  const [recipient, setRecipient] = useState("");
   const [copied, setCopied] = useState(false);
+  const [notice, setNotice] = useState("");
 
   const gpuFuelLine = preset === CUSTOM ? customText : preset;
 
@@ -69,7 +71,20 @@ export default function FuelPage() {
     setImmat("");
     setPreset(GPU_FUEL_PRESETS[0].value);
     setCustomText("");
+    setRecipient("");
     setCopied(false);
+    setNotice("");
+  };
+
+  const sendByEmail = () => {
+    if (!recipient) {
+      setNotice("Choisis un destinataire d'abord.");
+      return;
+    }
+    const subject = "FUEL" + (immat ? " " + registrationLabel(immat) : "");
+    const body = mail.split("\n").join("\r\n");
+    window.location.href =
+      "mailto:" + encodeURIComponent(recipient) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
   };
 
   return (
@@ -156,6 +171,27 @@ export default function FuelPage() {
         </section>
 
         <section className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">
+          <h2 className="mb-2 text-sm font-semibold">Destinataire</h2>
+          <select
+            className="w-full rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-2 py-1 text-sm"
+            value={recipient}
+            onChange={(e) => {
+              setRecipient(e.target.value);
+              setNotice("");
+            }}
+          >
+            <option value="" disabled>
+              — sélectionner —
+            </option>
+            {RECIPIENTS.map((r) => (
+              <option key={r.email} value={r.email}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </section>
+
+        <section className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">
           <h2 className="mb-2 text-sm font-semibold">Apercu du mail</h2>
           <pre className="whitespace-pre-wrap rounded border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-3 text-sm font-mono">
             {mail}
@@ -164,21 +200,33 @@ export default function FuelPage() {
       </div>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-950/95 backdrop-blur p-3">
-        <div className="mx-auto flex max-w-2xl flex-wrap items-center gap-2 text-sm">
-          <button
-            type="button"
-            onClick={copy}
-            className="rounded bg-blue-600 px-3 py-1.5 font-medium text-white"
-          >
-            {copied ? "Copie !" : "Copier le mail"}
-          </button>
-          <button
-            type="button"
-            onClick={reset}
-            className="rounded border border-neutral-300 dark:border-neutral-700 px-3 py-1.5"
-          >
-            Reinitialiser
-          </button>
+        <div className="mx-auto flex max-w-2xl flex-col gap-2 text-sm">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={copy}
+              className="flex-1 rounded bg-blue-600 px-3 py-1.5 font-medium text-white"
+            >
+              {copied ? "Copie !" : "Copier le mail"}
+            </button>
+            <button
+              type="button"
+              onClick={sendByEmail}
+              className="flex-1 rounded border border-blue-600 px-3 py-1.5 font-medium text-blue-600 dark:text-blue-400"
+            >
+              Envoyer par email
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded border border-neutral-300 dark:border-neutral-700 px-3 py-1.5"
+            >
+              Reinitialiser
+            </button>
+            {notice && <span className="text-xs text-red-600 dark:text-red-400">{notice}</span>}
+          </div>
         </div>
       </div>
     </main>

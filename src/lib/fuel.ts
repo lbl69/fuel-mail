@@ -33,6 +33,12 @@ export function formatWeightLine(label: string, rawLbs: string): string {
   return `${label} : ${formatThousands(lbsToKg(lbs))} KG (${formatThousands(lbs)} LBS)`;
 }
 
+export const RECIPIENTS = [
+  { label: "Trafic LYS", email: "operations.lys@aviapartner.aero" },
+  { label: "Trafic MXP", email: "mxp.handling.ops@aviapartner.aero" },
+  { label: "Trafic PUF", email: "trafic@pau.aeroport.fr" },
+] as const;
+
 export const GPU_FUEL_PRESETS = [
   { value: "GPU\nNO FUEL", label: "GPU seul (pas de fuel)" },
   { value: "GPU + FUEL", label: "GPU + fuel" },

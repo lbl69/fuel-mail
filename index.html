@@ -297,6 +297,11 @@
     max-width: 640px;
     margin: 0 auto;
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .actionbar-row{
+    display: flex;
     align-items: center;
     gap: 10px;
   }
@@ -319,6 +324,13 @@
     flex: 1;
   }
   .btn-primary:active{ background: var(--accent-strong); }
+  .btn-outline{
+    background: transparent;
+    border-color: var(--accent);
+    color: var(--accent);
+    flex: 1;
+  }
+  .btn-outline:active{ background: color-mix(in srgb, var(--accent) 12%, transparent); }
   .btn-ghost{
     background: transparent;
     border-color: var(--line);
@@ -328,9 +340,8 @@
     font-size: 11.5px;
     color: var(--ok);
     font-weight: 600;
-    min-width: 74px;
-    text-align: right;
   }
+  .status.error{ color: var(--bad); }
 
   @media (max-width: 400px){
     .grid4{ grid-template-columns: 1fr 1fr; }
@@ -410,6 +421,16 @@
         <textarea id="custom" placeholder="GPU + FUEL"></textarea>
       </div>
     </section>
+
+    <section class="panel">
+      <h2>Destinataire</h2>
+      <div class="field">
+        <label for="recipient" style="margin-bottom:1px">Trafic</label>
+        <select id="recipient">
+          <option value="" disabled selected>&mdash; s&eacute;lectionner &mdash;</option>
+        </select>
+      </div>
+    </section>
   </div>
 
   <div class="ticket-shell">
@@ -425,9 +446,14 @@
 
 <div class="actionbar">
   <div class="actionbar-inner">
-    <button type="button" class="btn-primary" id="copyBtn">Copier le mail</button>
-    <button type="button" class="btn-ghost" id="resetBtn">Effacer</button>
-    <span class="status" id="statusMsg"></span>
+    <div class="actionbar-row">
+      <button type="button" class="btn-primary" id="copyBtn">Copier le mail</button>
+      <button type="button" class="btn-outline" id="mailBtn">Envoyer par email</button>
+    </div>
+    <div class="actionbar-row">
+      <button type="button" class="btn-ghost" id="resetBtn">Effacer</button>
+      <span class="status" id="statusMsg"></span>
+    </div>
   </div>
 </div>
 
@@ -445,13 +471,27 @@
     preset: document.getElementById('preset'),
     custom: document.getElementById('custom'),
     customWrap: document.getElementById('customWrap'),
+    recipient: document.getElementById('recipient'),
     mailOut: document.getElementById('mailOut'),
     plate: document.getElementById('platePreview'),
     stamp: document.getElementById('stamp'),
     copyBtn: document.getElementById('copyBtn'),
+    mailBtn: document.getElementById('mailBtn'),
     resetBtn: document.getElementById('resetBtn'),
     statusMsg: document.getElementById('statusMsg'),
   };
+
+  const RECIPIENTS = [
+    { label: 'Trafic LYS', email: 'operations.lys@aviapartner.aero' },
+    { label: 'Trafic MXP', email: 'mxp.handling.ops@aviapartner.aero' },
+    { label: 'Trafic PUF', email: 'trafic@pau.aeroport.fr' },
+  ];
+  RECIPIENTS.forEach((r) => {
+    const opt = document.createElement('option');
+    opt.value = r.email;
+    opt.textContent = r.label;
+    els.recipient.appendChild(opt);
+  });
 
   function isNA(s){ return /^n\/?a$/i.test(s.trim()); }
 
@@ -581,13 +621,25 @@
     }
   });
 
-  function flashStatus(msg){
+  function flashStatus(msg, isError){
     els.statusMsg.textContent = msg;
-    setTimeout(() => { els.statusMsg.textContent = ''; }, 2200);
+    els.statusMsg.classList.toggle('error', !!isError);
+    setTimeout(() => { els.statusMsg.textContent = ''; els.statusMsg.classList.remove('error'); }, 2200);
   }
 
+  els.mailBtn.addEventListener('click', () => {
+    if (!els.recipient.value) {
+      flashStatus('Choisis un destinataire', true);
+      return;
+    }
+    const subject = 'FUEL' + (els.immat.value ? ' ' + registrationLabel(els.immat.value) : '');
+    const body = generateMail().split('\n').join('\r\n');
+    window.location.href = 'mailto:' + encodeURIComponent(els.recipient.value) +
+      '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  });
+
   els.resetBtn.addEventListener('click', () => {
-    [els.rtow, els.block, els.taxi, els.trip, els.crew, els.immat, els.custom].forEach((el) => { el.value = ''; });
+    [els.rtow, els.block, els.taxi, els.trip, els.crew, els.immat, els.custom, els.recipient].forEach((el) => { el.value = ''; });
     els.preset.value = 'GPU\\nNO FUEL';
     render();
   });

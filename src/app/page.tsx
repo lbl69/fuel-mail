@@ -88,9 +88,9 @@ export default function FuelPage() {
           <h2 className="mb-2 text-sm font-semibold">Fuel (LBS)</h2>
           <div className="grid grid-cols-2 gap-3">
             <WeightField label="RTOW" value={rtow} onChange={setRtow} placeholder="ex: 16950 ou N/A" />
-            <WeightField label="BLOCK" value={block} onChange={setBlock} placeholder="ex: 1633" />
-            <WeightField label="TAXI" value={taxi} onChange={setTaxi} placeholder="ex: 50" />
-            <WeightField label="TRIP" value={trip} onChange={setTrip} placeholder="ex: 574" />
+            <WeightField label="BLOCK" value={block} onChange={setBlock} placeholder="ex: 3200" />
+            <WeightField label="TAXI" value={taxi} onChange={setTaxi} placeholder="ex: 110" />
+            <WeightField label="TRIP" value={trip} onChange={setTrip} placeholder="ex: 1000" />
           </div>
         </section>
 

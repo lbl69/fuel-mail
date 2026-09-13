@@ -84,8 +84,15 @@ export default function FuelPage() {
     const subject = "Fuel Figures T7";
     const body = mail.split("\n").join("\r\n");
     const to = encodeURIComponent(recipient);
-    window.location.href =
-      "ms-outlook://compose?to=" + to + "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    const params = "to=" + to + "&subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (isAndroid) {
+      const fallback = encodeURIComponent("mailto:" + recipient + "?subject=" + subject + "&body=" + body);
+      window.location.href =
+        "intent://compose?" + params + "#Intent;scheme=ms-outlook;package=com.microsoft.office.outlook;S.browser_fallback_url=" + fallback + ";end";
+    } else {
+      window.location.href = "ms-outlook://compose?" + params;
+    }
   };
 
   return (

@@ -151,6 +151,9 @@ export default function FuelPage() {
               </select>
             </label>
           </div>
+          <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
+            Masses &amp; index DOW/DOI : Tableau des versions PAX rev. 58 (30/10/2026)
+          </p>
         </section>
 
         <section className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-3">

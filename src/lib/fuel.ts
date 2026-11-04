@@ -48,7 +48,7 @@ export const GPU_FUEL_PRESETS = [
 ] as const;
 
 /** Masse et index de base par immatriculation et configuration d'equipage.
- *  Source : Tableau des versions PAX, MANEX partie B6 (annexe B6-02 Rev 57, 13/06/2026). */
+ *  Source : Tableau des versions PAX, MANEX partie B6 (annexe B6-02 Rev 58, 30/10/2026). */
 export interface AircraftVersion {
   dowLbs: number;
   dowKg: number;
@@ -113,11 +113,11 @@ export const AIRCRAFT_VERSIONS: Record<string, Record<string, AircraftVersion>> 
     "3/1": { dowLbs: 11737, dowKg: 5324, doi: 19.08 },
   },
   FGTVC: {
-    "2/0": { dowLbs: 11305, dowKg: 5128, doi: 26.55 },
-    "2/1": { dowLbs: 11471, dowKg: 5203, doi: 21.43 },
-    "2/2": { dowLbs: 11636, dowKg: 5278, doi: 17.70 },
-    "3/0": { dowLbs: 11493, dowKg: 5213, doi: 20.74 },
-    "3/1": { dowLbs: 11658, dowKg: 5288, doi: 17.02 },
+    "2/0": { dowLbs: 11045, dowKg: 5010, doi: 40.67 },
+    "2/1": { dowLbs: 11211, dowKg: 5085, doi: 35.55 },
+    "2/2": { dowLbs: 11376, dowKg: 5160, doi: 31.82 },
+    "3/0": { dowLbs: 11233, dowKg: 5095, doi: 34.86 },
+    "3/1": { dowLbs: 11398, dowKg: 5170, doi: 31.14 },
   },
   FGUME: {
     "2/0": { dowLbs: 11125, dowKg: 5046, doi: 40.93 },
